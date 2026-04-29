@@ -70,7 +70,7 @@ export const Layout: React.FC = () => {
             <p className="text-xs font-medium text-zinc-600 group-hover:text-zinc-900 transition-colors">Víctor Jorge Molina</p>
           </a>
           <a 
-            href="https://antigravity.ai" 
+            href="https://antigravityai.io/" 
             target="_blank" 
             rel="noopener noreferrer"
             className="mt-3 block text-[10px] text-zinc-400 hover:text-zinc-600 transition-colors"
