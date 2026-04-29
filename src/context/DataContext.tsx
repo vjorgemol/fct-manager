@@ -1,8 +1,13 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { Student, Company, Placement, Teacher } from '../types';
 
+// URL base para las peticiones al servidor backend (Node.js/Express)
 const API_URL = 'http://localhost:3005/api';
 
+/**
+ * Definición de la estructura del contexto global de datos.
+ * Incluye todos los estados y funciones de manipulación de datos.
+ */
 interface DataContextType {
   students: Student[];
   companies: Company[];
@@ -38,20 +43,30 @@ interface DataContextType {
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
+/**
+ * Proveedor de Datos (DataProvider).
+ * Encargado de la persistencia de datos (API) y la distribución del estado a toda la app.
+ */
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // --- Estados de Configuración ---
   const [academicYear, setAcademicYear] = useState<string>('25/26');
-  const [students, setStudents] = useState<Student[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [placements, setPlacements] = useState<Placement[]>([]);
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [schoolName, setSchoolName] = useState<string>('Centro Educativo');
   const [reminderDays, setReminderDays] = useState<number>(14);
   const [tutorName, setTutorName] = useState<string>('Tutor FCT');
   const [tutorEmail, setTutorEmail] = useState<string>('tutor@centro.edu');
   const [cycleName, setCycleName] = useState<string>('Formación Profesional');
 
+  // --- Estados de Datos ---
+  const [students, setStudents] = useState<Student[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [placements, setPlacements] = useState<Placement[]>([]);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+
+  /**
+   * Efecto inicial: Carga todos los datos desde el servidor al arrancar la aplicación.
+   */
   useEffect(() => {
-    // Load initial data from server
+    // Cargar ajustes generales
     fetch(`${API_URL}/settings`)
       .then(res => res.json())
       .then(data => {
@@ -64,12 +79,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       })
       .catch(console.error);
 
+    // Cargar colecciones de datos
     fetch(`${API_URL}/students`).then(res => res.json()).then(setStudents).catch(console.error);
     fetch(`${API_URL}/companies`).then(res => res.json()).then(setCompanies).catch(console.error);
     fetch(`${API_URL}/placements`).then(res => res.json()).then(setPlacements).catch(console.error);
     fetch(`${API_URL}/teachers`).then(res => res.json()).then(setTeachers).catch(console.error);
   }, []);
 
+  /**
+   * Sincroniza un ajuste específico con la base de datos.
+   */
   const updateSettings = (key: string, value: string) => {
     fetch(`${API_URL}/settings`, {
       method: 'PUT',
@@ -78,36 +97,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }).catch(console.error);
   };
 
-  const handleSetSchoolName = (name: string) => {
-    setSchoolName(name);
-    updateSettings('schoolName', name);
-  };
+  // Handlers para actualizar ajustes tanto en estado como en DB
+  const handleSetSchoolName = (name: string) => { setSchoolName(name); updateSettings('schoolName', name); };
+  const handleSetAcademicYear = (year: string) => { setAcademicYear(year); updateSettings('academicYear', year); };
+  const handleSetReminderDays = (days: number) => { setReminderDays(days); updateSettings('reminderDays', days.toString()); };
+  const handleSetTutorName = (name: string) => { setTutorName(name); updateSettings('tutorName', name); };
+  const handleSetTutorEmail = (email: string) => { setTutorEmail(email); updateSettings('tutorEmail', email); };
+  const handleSetCycleName = (name: string) => { setCycleName(name); updateSettings('cycleName', name); };
 
-  const handleSetAcademicYear = (year: string) => {
-    setAcademicYear(year);
-    updateSettings('academicYear', year);
-  };
-
-  const handleSetReminderDays = (days: number) => {
-    setReminderDays(days);
-    updateSettings('reminderDays', days.toString());
-  };
-
-  const handleSetTutorName = (name: string) => {
-    setTutorName(name);
-    updateSettings('tutorName', name);
-  };
-
-  const handleSetTutorEmail = (email: string) => {
-    setTutorEmail(email);
-    updateSettings('tutorEmail', email);
-  };
-
-  const handleSetCycleName = (name: string) => {
-    setCycleName(name);
-    updateSettings('cycleName', name);
-  };
-
+  /**
+   * Calcula el curso académico anterior basándose en el actual (ej: "25/26" -> "24/25").
+   */
   const getPreviousYear = (year: string) => {
     if (!year || !year.includes('/')) return year;
     const parts = year.split('/');
@@ -116,6 +116,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return `${prev1}/${prev2}`;
   };
 
+  // --- CRUD Alumnos ---
   const addStudent = (student: Omit<Student, 'id'>) => {
     const newStudent = { ...student, id: crypto.randomUUID(), academicYear };
     setStudents(prev => [...prev, newStudent]);
@@ -129,10 +130,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const deleteStudent = (id: string) => {
     setStudents(prev => prev.filter(s => s.id !== id));
-    setPlacements(prev => prev.filter(p => p.studentId !== id));
+    setPlacements(prev => prev.filter(p => p.studentId !== id)); // Limpiar asignaciones huérfanas
     fetch(`${API_URL}/students/${id}`, { method: 'DELETE' }).catch(console.error);
   };
 
+  // --- CRUD Empresas ---
   const addCompany = (company: Omit<Company, 'id'>) => {
     const newCompany = { ...company, id: crypto.randomUUID() };
     setCompanies(prev => [...prev, newCompany]);
@@ -146,10 +148,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const deleteCompany = (id: string) => {
     setCompanies(prev => prev.filter(c => c.id !== id));
-    setPlacements(prev => prev.filter(p => p.companyId !== id));
+    setPlacements(prev => prev.filter(p => p.companyId !== id)); // Limpiar asignaciones huérfanas
     fetch(`${API_URL}/companies/${id}`, { method: 'DELETE' }).catch(console.error);
   };
 
+  // --- CRUD Profesores ---
   const addTeacher = (teacher: Omit<Teacher, 'id'>) => {
     const newTeacher = { ...teacher, id: crypto.randomUUID() };
     setTeachers(prev => [...prev, newTeacher]);
@@ -162,6 +165,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fetch(`${API_URL}/teachers/${id}`, { method: 'DELETE' }).catch(console.error);
   };
 
+  // --- CRUD Asignaciones (Placements) ---
   const addPlacement = (placement: Omit<Placement, 'id'>) => {
     const newPlacement = { ...placement, id: crypto.randomUUID(), academicYear };
     setPlacements(prev => [...prev, newPlacement]);
@@ -178,11 +182,19 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fetch(`${API_URL}/placements/${id}`, { method: 'DELETE' }).catch(console.error);
   };
 
+  /**
+   * Filtrado inteligente de datos según el curso académico seleccionado.
+   * - Alumnos: Se muestran los del curso actual y el anterior (para facilitar re-asignaciones).
+   * - Asignaciones: Solo se muestran las del curso actual.
+   */
   const filteredStudents = students.filter(s => 
     s.academicYear === academicYear || s.academicYear === getPreviousYear(academicYear)
   );
   const filteredPlacements = placements.filter(p => p.academicYear === academicYear);
 
+  /**
+   * Importación masiva de datos (usada por la restauración de Backup XML).
+   */
   const importData = (data: { students: Student[], companies: Company[], placements: Placement[], teachers?: Teacher[], schoolName: string, academicYear: string, reminderDays?: number, tutorName?: string, tutorEmail?: string, cycleName?: string }) => {
     setStudents(data.students || []);
     setCompanies(data.companies || []);
@@ -195,6 +207,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (data.tutorEmail) setTutorEmail(data.tutorEmail);
     if (data.cycleName) setCycleName(data.cycleName);
     
+    // Enviar todo el paquete de importación al servidor para sobrescribir DB
     fetch(`${API_URL}/import`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -227,8 +240,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
+/**
+ * Hook personalizado para acceder fácilmente a los datos en cualquier componente.
+ */
 export const useData = () => {
   const context = useContext(DataContext);
-  if (!context) throw new Error('useData must be used within a DataProvider');
+  if (!context) throw new Error('useData debe usarse dentro de un DataProvider');
   return context;
 };

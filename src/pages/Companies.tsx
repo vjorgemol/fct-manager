@@ -2,29 +2,53 @@ import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
 import { Plus, Trash2, MapPin, Edit, Search, Phone, Download } from 'lucide-react';
 
+/**
+ * Componente para la gestión del directorio de empresas.
+ * Permite realizar el seguimiento de la colaboración por curso académico.
+ */
 export const Companies: React.FC = () => {
   const { companies, addCompany, deleteCompany, updateCompany, academicYear } = useData();
+  
+  // Estados de la interfaz
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ name: '', email: '', location: '', address: '', contactPerson: '', collaborationStatus: 'none' as 'none' | 'prospecting' | 'accepted' | 'rejected', inactiveEmail: false, phone: '' });
+  
+  // Estado del formulario
+  const [formData, setFormData] = useState({ 
+    name: '', 
+    email: '', 
+    location: '', 
+    address: '', 
+    contactPerson: '', 
+    collaborationStatus: 'none' as 'none' | 'prospecting' | 'accepted' | 'rejected', 
+    inactiveEmail: false, 
+    phone: '' 
+  });
+  
   const [search, setSearch] = useState('');
 
+  /**
+   * Gestiona el envío del formulario.
+   * Calcula los históricos de colaboración (prospección, aceptado, rechazado) 
+   * concatenando el curso actual a los campos correspondientes en la DB.
+   */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (editingId) {
       const company = companies.find(c => c.id === editingId);
+      // Obtener listas actuales de años por cada estado
       let pYears = company?.prospectingYears ? company.prospectingYears.split(',').filter(Boolean) : [];
       let aYears = company?.acceptedYears ? company.acceptedYears.split(',').filter(Boolean) : [];
       let rYears = company?.rejectedYears ? company.rejectedYears.split(',').filter(Boolean) : [];
       
-      // Remove current year from all lists first
+      // Limpiar el curso actual de todas las listas antes de re-asignar el nuevo estado
       pYears = pYears.filter(y => y !== academicYear);
       aYears = aYears.filter(y => y !== academicYear);
       rYears = rYears.filter(y => y !== academicYear);
       
-      // Add to the selected status list
+      // Añadir el curso actual a la lista del estado seleccionado
       if (formData.collaborationStatus === 'prospecting') pYears.push(academicYear);
       if (formData.collaborationStatus === 'accepted') aYears.push(academicYear);
       if (formData.collaborationStatus === 'rejected') rYears.push(academicYear);
@@ -37,6 +61,7 @@ export const Companies: React.FC = () => {
         rejectedYears: rYears.join(',')
       } as any);
     } else {
+      // Nueva empresa: asignar el año académico actual al estado inicial
       const pYears = formData.collaborationStatus === 'prospecting' ? academicYear : '';
       const aYears = formData.collaborationStatus === 'accepted' ? academicYear : '';
       const rYears = formData.collaborationStatus === 'rejected' ? academicYear : '';
@@ -51,6 +76,10 @@ export const Companies: React.FC = () => {
     resetForm();
   };
 
+  /**
+   * Carga los datos de una empresa en el formulario para editarla.
+   * Determina el estado de colaboración buscando el curso académico actual en las listas.
+   */
   const handleEdit = (company: any) => {
     let status: 'none' | 'prospecting' | 'accepted' | 'rejected' = 'none';
     if (company.acceptedYears?.includes(academicYear)) status = 'accepted';
@@ -77,6 +106,11 @@ export const Companies: React.FC = () => {
     setEditingId(null);
     setIsAdding(false);
   };
+
+  /**
+   * Exporta el listado de empresas a CSV.
+   * Incluye una columna con el estado de colaboración calculado para el curso actual.
+   */
   const exportToCSV = () => {
     if (companies.length === 0) return;
     const headers = ['Nombre', 'Email', 'Teléfono', 'Localidad', 'Dirección', 'Persona de Contacto', 'Email Inactivo', 'Estado'];
@@ -109,12 +143,14 @@ export const Companies: React.FC = () => {
     document.body.removeChild(link);
   };
 
+  // Filtrado por múltiples campos de texto
   const filtered = companies.filter(c => 
     `${c.name} ${c.location} ${c.address || ''} ${c.email} ${c.contactPerson || ''} ${c.phone || ''}`.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Cabecera y Exportación */}
       <div className="flex justify-between items-end">
         <div>
           <div className="flex items-center gap-3">
@@ -133,21 +169,21 @@ export const Companies: React.FC = () => {
           </button>
           <button 
             onClick={() => {
-            if (isAdding) {
-              resetForm();
-            } else {
-              setIsAdding(true);
-              document.getElementById('main-scroll-container')?.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-          }}
-          className="bg-primary-600 hover:bg-primary-700 text-white p-2.5 sm:px-5 sm:py-2.5 rounded-xl font-medium flex items-center transition-colors shadow-sm shadow-primary-500/20"
-        >
-          <Plus size={20} className="sm:mr-2" />
-          <span className="hidden sm:inline">{isAdding ? 'Cancelar' : 'Añadir Empresa'}</span>
-        </button>
+              if (isAdding) resetForm();
+              else {
+                setIsAdding(true);
+                document.getElementById('main-scroll-container')?.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+            }}
+            className="bg-primary-600 hover:bg-primary-700 text-white p-2.5 sm:px-5 sm:py-2.5 rounded-xl font-medium flex items-center transition-colors shadow-sm shadow-primary-500/20"
+          >
+            <Plus size={20} className="sm:mr-2" />
+            <span className="hidden sm:inline">{isAdding ? 'Cancelar' : 'Añadir Empresa'}</span>
+          </button>
+        </div>
       </div>
-    </div>
 
+      {/* Formulario de Alta/Edición */}
       {isAdding && (
         <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm animate-in slide-in-from-top-4 duration-300">
           <h3 className="text-lg font-semibold text-zinc-900 mb-4">{editingId ? 'Editar Empresa' : 'Nueva Empresa'}</h3>
@@ -197,7 +233,7 @@ export const Companies: React.FC = () => {
                   checked={formData.inactiveEmail}
                   onChange={e => setFormData({...formData, inactiveEmail: e.target.checked})}
                 />
-                <span className="text-sm font-medium text-red-700">Email Inactivo</span>
+                <span className="text-sm font-medium text-red-700" title="Marcar si los emails rebotan o la empresa no contesta">Email Inactivo</span>
               </label>
             </div>
             <div className="md:col-span-3 flex justify-end mt-4 pt-4 border-t border-zinc-100">
@@ -209,6 +245,7 @@ export const Companies: React.FC = () => {
         </div>
       )}
 
+      {/* Barra de Búsqueda */}
       <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden flex flex-col">
         <div className="p-4 border-b border-zinc-100 flex items-center bg-zinc-50/50">
           <div className="relative flex-1 max-w-md">
@@ -224,6 +261,7 @@ export const Companies: React.FC = () => {
         </div>
       </div>
 
+      {/* Grid de Empresas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filtered.length === 0 ? (
           <div className="col-span-full py-12 text-center text-zinc-500 bg-white rounded-2xl border border-dashed border-zinc-200">
@@ -237,34 +275,23 @@ export const Companies: React.FC = () => {
                   <div className="w-12 h-12 bg-primary-50 text-primary-600 rounded-xl flex items-center justify-center font-bold text-xl uppercase">
                     {c.name.substring(0, 1)}
                   </div>
+                  {/* Etiquetas de estado dinámicas */}
                   {c.acceptedYears?.includes(academicYear) && (
-                    <span className="bg-blue-100 text-blue-700 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md">
-                      Colabora
-                    </span>
+                    <span className="bg-blue-100 text-blue-700 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md">Colabora</span>
                   )}
                   {c.rejectedYears?.includes(academicYear) && (
-                    <span className="bg-zinc-100 text-zinc-600 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md">
-                      No colabora
-                    </span>
+                    <span className="bg-zinc-100 text-zinc-600 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md">No colabora</span>
                   )}
                   {c.prospectingYears?.includes(academicYear) && !c.acceptedYears?.includes(academicYear) && !c.rejectedYears?.includes(academicYear) && (
-                    <span className="bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md">
-                      Prospección
-                    </span>
+                    <span className="bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md">Prospección</span>
                   )}
                   {!!c.inactiveEmail && (
-                    <span className="bg-red-100 text-red-700 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md">
-                      Email Inactivo
-                    </span>
+                    <span className="bg-red-100 text-red-700 text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md">Email Inactivo</span>
                   )}
                 </div>
                 <div className="flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => handleEdit(c)} className="text-zinc-400 hover:text-primary-500 transition-colors">
-                    <Edit size={18} />
-                  </button>
-                  <button onClick={() => setDeletingId(c.id)} className="text-zinc-400 hover:text-red-500 transition-colors">
-                    <Trash2 size={18} />
-                  </button>
+                  <button onClick={() => handleEdit(c)} className="text-zinc-400 hover:text-primary-500 transition-colors"><Edit size={18} /></button>
+                  <button onClick={() => setDeletingId(c.id)} className="text-zinc-400 hover:text-red-500 transition-colors"><Trash2 size={18} /></button>
                 </div>
               </div>
               <h3 className="text-lg font-bold text-zinc-900 mb-1">{c.name}</h3>
@@ -299,25 +326,20 @@ export const Companies: React.FC = () => {
         )}
       </div>
 
+      {/* Modal de confirmación de eliminación */}
       {deletingId && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setDeletingId(null)}>
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden p-8" onClick={e => e.stopPropagation()}>
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center shrink-0">
-                <Trash2 size={24} />
-              </div>
+              <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center shrink-0"><Trash2 size={24} /></div>
               <h3 className="text-xl font-bold text-zinc-900">Eliminar empresa</h3>
             </div>
             <p className="text-zinc-600 mb-8 leading-relaxed">
               ¿Estás seguro de que deseas eliminar esta empresa? Esta acción no se puede deshacer y <strong>eliminará también todas las prácticas asociadas</strong> a esta empresa.
             </p>
             <div className="flex gap-3 justify-end">
-              <button onClick={() => setDeletingId(null)} className="px-5 py-2.5 rounded-xl font-medium text-zinc-600 hover:bg-zinc-100 transition-colors">
-                Cancelar
-              </button>
-              <button onClick={() => { deleteCompany(deletingId); setDeletingId(null); }} className="px-5 py-2.5 rounded-xl font-medium bg-red-600 hover:bg-red-700 text-white shadow-md transition-colors flex items-center">
-                Sí, eliminar
-              </button>
+              <button onClick={() => setDeletingId(null)} className="px-5 py-2.5 rounded-xl font-medium text-zinc-600 hover:bg-zinc-100 transition-colors">Cancelar</button>
+              <button onClick={() => { deleteCompany(deletingId); setDeletingId(null); }} className="px-5 py-2.5 rounded-xl font-medium bg-red-600 hover:bg-red-700 text-white shadow-md transition-colors flex items-center">Sí, eliminar</button>
             </div>
           </div>
         </div>

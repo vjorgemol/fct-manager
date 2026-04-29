@@ -3,23 +3,39 @@ import { useData } from '../context/DataContext';
 import { Plus, Trash2, Search, Edit, Mail, X, UploadCloud, CheckCircle2, AlertTriangle, Download } from 'lucide-react';
 import type { Student } from '../types';
 
+/**
+ * Componente principal para la gestión de alumnos.
+ * Permite listar, añadir, editar, eliminar e importar/exportar alumnos desde CSV.
+ */
 export const Students: React.FC = () => {
+  // Acceso al estado global de la aplicación a través del contexto
   const { students, addStudent, deleteStudent, updateStudent, academicYear } = useData();
+
+  // Estados locales para la gestión de la interfaz
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
   const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '', phone: '', photoBase64: '' });
   const [search, setSearch] = useState('');
+  
+  // Estados para la lógica de importación/exportación
   const [importResult, setImportResult] = useState<{ count: number, skipped: number, error?: string } | null>(null);
   const [pendingImport, setPendingImport] = useState<{ students: any[], skipped: number } | null>(null);
   const [showExportOptions, setShowExportOptions] = useState(false);
+  
+  // Referencia al input de archivo oculto
   const csvInputRef = React.useRef<HTMLInputElement>(null);
 
+  /**
+   * Procesa la lectura del archivo CSV seleccionado por el usuario.
+   * Detecta automáticamente el separador y las columnas necesarias.
+   */
   const handleCSVImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Resetear estados de importación previos
     setImportResult(null);
     setPendingImport(null);
 
@@ -34,6 +50,10 @@ export const Students: React.FC = () => {
           return;
         }
 
+        /**
+         * Función interna para dividir una línea de CSV respetando las comillas.
+         * Crucial para importar imágenes (Base64) que pueden contener comas.
+         */
         const splitCSVLine = (line: string, sep: string) => {
           const result = [];
           let curValue = '';
@@ -54,6 +74,7 @@ export const Students: React.FC = () => {
         const separator = header.includes(';') ? ';' : ',';
         const headers = splitCSVLine(header, separator);
         
+        // Mapeo dinámico de índices de columnas por nombre
         const nameIdx = headers.findIndex(h => h.toLowerCase() === 'nombre');
         const lastNameIdx = headers.findIndex(h => h.toLowerCase().includes('apellido'));
         const emailIdx = headers.findIndex(h => h.toLowerCase().includes('correo') || h.toLowerCase() === 'email');
@@ -68,6 +89,7 @@ export const Students: React.FC = () => {
         const toImport: any[] = [];
         let skipped = 0;
 
+        // Procesar cada línea de datos
         for (let i = 1; i < lines.length; i++) {
           const values = splitCSVLine(lines[i], separator);
           if (values.length < 3) continue;
@@ -79,6 +101,7 @@ export const Students: React.FC = () => {
           const photoBase64 = photoIdx !== -1 ? values[photoIdx] : '';
 
           if (firstName && lastName && email) {
+            // Comprobar duplicados por email antes de añadir a la lista pendiente
             if (!students.some(s => s.email.toLowerCase() === email.toLowerCase())) {
               toImport.push({ firstName, lastName, email, phone: phone || '', photoBase64: photoBase64 || '' });
             } else {
@@ -87,6 +110,7 @@ export const Students: React.FC = () => {
           }
         }
         
+        // Mostrar modal de confirmación si hay datos válidos
         if (toImport.length > 0 || skipped > 0) {
           setPendingImport({ students: toImport, skipped });
         } else {
@@ -96,11 +120,15 @@ export const Students: React.FC = () => {
         setImportResult({ count: 0, skipped: 0, error: `Error: ${err.message}` });
       }
 
+      // Limpiar el input para permitir volver a seleccionar el mismo archivo
       if (csvInputRef.current) csvInputRef.current.value = '';
     };
     reader.readAsText(file);
   };
 
+  /**
+   * Ejecuta la inserción definitiva de los alumnos pendientes tras la confirmación del usuario.
+   */
   const confirmImport = () => {
     if (!pendingImport) return;
     pendingImport.students.forEach(s => addStudent(s));
@@ -108,6 +136,10 @@ export const Students: React.FC = () => {
     setPendingImport(null);
   };
 
+  /**
+   * Genera y descarga un archivo CSV con el listado actual de alumnos.
+   * @param includeImages Indica si se debe incluir la columna Base64 con las fotos.
+   */
   const exportToCSV = (includeImages: boolean) => {
     if (students.length === 0) return;
     const headers = ['Nombre', 'Apellidos', 'Email', 'Teléfono'];
@@ -136,6 +168,9 @@ export const Students: React.FC = () => {
     setShowExportOptions(false);
   };
 
+  /**
+   * Gestiona la carga de imágenes, redimensionándolas para optimizar el almacenamiento.
+   */
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -171,6 +206,9 @@ export const Students: React.FC = () => {
     }
   };
 
+  /**
+   * Gestiona el envío del formulario de creación/edición manual.
+   */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingId) {
@@ -182,25 +220,34 @@ export const Students: React.FC = () => {
     resetForm();
   };
 
+  /**
+   * Prepara el formulario para editar un alumno existente.
+   */
   const handleEdit = (student: any) => {
     setFormData({ firstName: student.firstName, lastName: student.lastName, email: student.email, phone: student.phone || '', photoBase64: student.photoBase64 || '' });
     setEditingId(student.id);
     setIsAdding(true);
+    // Scroll suave hacia arriba para ver el formulario
     document.getElementById('main-scroll-container')?.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  /**
+   * Resetea el formulario y limpia estados de edición.
+   */
   const resetForm = () => {
     setFormData({ firstName: '', lastName: '', email: '', phone: '', photoBase64: '' });
     setEditingId(null);
     setIsAdding(false);
   };
 
+  // Filtrado y ordenación de la lista mostrada en tiempo real
   const filtered = students.filter(s => 
     `${s.firstName} ${s.lastName} ${s.email}`.toLowerCase().includes(search.toLowerCase())
   ).sort((a, b) => a.lastName.localeCompare(b.lastName));
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Cabecera y Botones de Acción */}
       <div className="flex justify-between items-end">
         <div>
           <div className="flex items-center gap-3">
@@ -210,6 +257,7 @@ export const Students: React.FC = () => {
           <p className="text-zinc-500 mt-2">Gestiona el listado de alumnos para prácticas.</p>
         </div>
         <div className="flex gap-3">
+          {/* Input de archivo oculto activado por el botón */}
           <input type="file" accept=".csv" ref={csvInputRef} className="hidden" onChange={handleCSVImport} />
           <button 
             onClick={() => csvInputRef.current?.click()}
@@ -241,6 +289,7 @@ export const Students: React.FC = () => {
         </div>
       </div>
 
+      {/* Formulario de Alta/Edición */}
       {isAdding && (
         <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm animate-in slide-in-from-top-4 duration-300">
           <h3 className="text-lg font-semibold text-zinc-900 mb-4">{editingId ? 'Editar Alumno' : 'Nuevo Alumno'}</h3>
@@ -275,13 +324,17 @@ export const Students: React.FC = () => {
         </div>
       )}
 
+      {/* Listado de Alumnos */}
       <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden flex flex-col">
+        {/* Buscador */}
         <div className="p-4 border-b border-zinc-100 flex items-center bg-zinc-50/50">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
             <input type="text" placeholder="Buscar alumno..." className="w-full pl-10 pr-4 py-2 bg-white border border-zinc-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 outline-none" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         </div>
+
+        {/* Vista de Tabla (Desktop) */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -306,8 +359,8 @@ export const Students: React.FC = () => {
                     <td className="px-6 py-4 text-zinc-500">{s.email}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => handleEdit(s)} className="p-2 text-zinc-400 hover:text-primary-500 hover:bg-primary-50 rounded-lg transition-colors"><Edit size={18} /></button>
-                        <button onClick={(e) => { e.stopPropagation(); setDeletingId(s.id); }} className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={18} /></button>
+                        <button onClick={() => handleEdit(s)} title="Editar" className="p-2 text-zinc-400 hover:text-primary-500 hover:bg-primary-50 rounded-lg transition-colors"><Edit size={18} /></button>
+                        <button onClick={(e) => { e.stopPropagation(); setDeletingId(s.id); }} title="Eliminar" className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={18} /></button>
                       </div>
                     </td>
                   </tr>
@@ -316,6 +369,8 @@ export const Students: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Vista de Tarjetas (Mobile) */}
         <div className="md:hidden divide-y divide-zinc-100">
           {filtered.length === 0 ? (
             <div className="px-6 py-8 text-center text-zinc-500">No se encontraron alumnos.</div>
@@ -339,6 +394,7 @@ export const Students: React.FC = () => {
         </div>
       </div>
 
+      {/* Modal: Vista Detallada del Alumno */}
       {viewingStudent && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setViewingStudent(null)}>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
@@ -357,6 +413,7 @@ export const Students: React.FC = () => {
         </div>
       )}
 
+      {/* Modal: Confirmación de Eliminación */}
       {deletingId && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setDeletingId(null)}>
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden p-8" onClick={e => e.stopPropagation()}>
@@ -373,6 +430,7 @@ export const Students: React.FC = () => {
         </div>
       )}
 
+      {/* Modal: Confirmación de Importación (Pre-check) */}
       {pendingImport && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setPendingImport(null)}>
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden p-8" onClick={e => e.stopPropagation()}>
@@ -395,6 +453,7 @@ export const Students: React.FC = () => {
         </div>
       )}
 
+      {/* Modal: Resultado Final de Importación */}
       {importResult && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setImportResult(null)}>
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden p-8" onClick={e => e.stopPropagation()}>
@@ -417,6 +476,7 @@ export const Students: React.FC = () => {
         </div>
       )}
 
+      {/* Modal: Opciones de Exportación */}
       {showExportOptions && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setShowExportOptions(false)}>
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden p-8" onClick={e => e.stopPropagation()}>
