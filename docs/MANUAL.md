@@ -87,4 +87,11 @@ Añade a tus compañeros de departamento para poder asignarlos como tutores de s
 *   **Seguridad**: Los correos no se envían solos; el sistema abre tu gestor de correo predeterminado (Outlook, Gmail, etc.) con el borrador ya listo para que tú lo revises y lo envíes.
 
 ---
+## 📞 Soporte y Contacto
+Si tienes alguna duda, encuentras un error o tienes sugerencias para mejorar la aplicación, puedes contactar con el desarrollador:
+
+*   **Víctor Jorge Molina**
+*   **Email**: [vicdejor@posteo.net](mailto:vicdejor@posteo.net)
+
+---
 *Manual generado para FE Connect v1.5 - 2026*

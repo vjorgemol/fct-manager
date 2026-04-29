@@ -61,6 +61,15 @@ export const Layout: React.FC = () => {
             </NavLink>
           ))}
         </nav>
+        <div className="p-6 border-t border-zinc-100">
+          <a 
+            href="mailto:vicdejor@posteo.net"
+            className="group block"
+          >
+            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1 group-hover:text-primary-500 transition-colors">Desarrollado por</p>
+            <p className="text-xs font-medium text-zinc-600 group-hover:text-zinc-900 transition-colors">Víctor Jorge Molina</p>
+          </a>
+        </div>
       </aside>
 
       {/* Main Content */}
