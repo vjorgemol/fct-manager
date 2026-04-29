@@ -36,7 +36,7 @@ app.put('/api/settings', async (req, res) => {
 });
 
 app.post('/api/import', async (req, res) => {
-  const { students, companies, placements, teachers, schoolName, academicYear, reminderDays, tutorName, tutorEmail, cycleName } = req.body;
+  const { students, companies, placements, teachers, schoolName, academicYear, reminderDays, tutorName, tutorEmail, cycleName, templateProspecting, templateStart, templateEnd, cycleHours } = req.body;
 
   try {
     await run('BEGIN TRANSACTION');
@@ -55,6 +55,18 @@ app.post('/api/import', async (req, res) => {
     }
     if (cycleName !== undefined) {
       await run('UPDATE settings SET value = ? WHERE key = ?', [cycleName, 'cycleName']);
+    }
+    if (templateProspecting !== undefined) {
+      await run('UPDATE settings SET value = ? WHERE key = ?', [templateProspecting, 'templateProspecting']);
+    }
+    if (templateStart !== undefined) {
+      await run('UPDATE settings SET value = ? WHERE key = ?', [templateStart, 'templateStart']);
+    }
+    if (templateEnd !== undefined) {
+      await run('UPDATE settings SET value = ? WHERE key = ?', [templateEnd, 'templateEnd']);
+    }
+    if (cycleHours !== undefined) {
+      await run('UPDATE settings SET value = ? WHERE key = ?', [cycleHours.toString(), 'cycleHours']);
     }
 
     // Clear existing data

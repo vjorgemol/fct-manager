@@ -41,6 +41,10 @@ export const Settings: React.FC = () => {
     xml += `    <tutorName>${escapeXml(tutorName)}</tutorName>\n`;
     xml += `    <tutorEmail>${escapeXml(tutorEmail)}</tutorEmail>\n`;
     xml += `    <cycleName>${escapeXml(cycleName)}</cycleName>\n`;
+    xml += `    <templateProspecting>${escapeXml(templateProspecting)}</templateProspecting>\n`;
+    xml += `    <templateStart>${escapeXml(templateStart)}</templateStart>\n`;
+    xml += `    <templateEnd>${escapeXml(templateEnd)}</templateEnd>\n`;
+    xml += `    <cycleHours>${cycleHours}</cycleHours>\n`;
     xml += `    <exportDate>${new Date().toISOString()}</exportDate>\n`;
     xml += `  </metadata>\n`;
 
@@ -141,6 +145,10 @@ export const Settings: React.FC = () => {
         const loadedTutorName = meta?.getElementsByTagName("tutorName")[0]?.textContent || 'Tutor FCT';
         const loadedTutorEmail = meta?.getElementsByTagName("tutorEmail")[0]?.textContent || 'tutor@centro.edu';
         const loadedCycleName = meta?.getElementsByTagName("cycleName")[0]?.textContent || 'Formación Profesional';
+        const loadedTemplateProspecting = meta?.getElementsByTagName("templateProspecting")[0]?.textContent || '';
+        const loadedTemplateStart = meta?.getElementsByTagName("templateStart")[0]?.textContent || '';
+        const loadedTemplateEnd = meta?.getElementsByTagName("templateEnd")[0]?.textContent || '';
+        const loadedCycleHours = Number(meta?.getElementsByTagName("cycleHours")[0]?.textContent) || 400;
 
         // Parse Students
         const studentsList = Array.from(backupRoot.getElementsByTagName("student")).map(node => ({
@@ -194,6 +202,10 @@ export const Settings: React.FC = () => {
           tutorName: loadedTutorName,
           tutorEmail: loadedTutorEmail,
           cycleName: loadedCycleName,
+          templateProspecting: loadedTemplateProspecting,
+          templateStart: loadedTemplateStart,
+          templateEnd: loadedTemplateEnd,
+          cycleHours: loadedCycleHours,
           teachers: teachersList
         });
 

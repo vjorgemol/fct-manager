@@ -108,6 +108,10 @@ db.serialize(() => {
   db.run(`INSERT OR IGNORE INTO settings (key, value) VALUES ('tutorName', 'Tutor FCT')`);
   db.run(`INSERT OR IGNORE INTO settings (key, value) VALUES ('tutorEmail', 'tutor@centro.edu')`);
   db.run(`INSERT OR IGNORE INTO settings (key, value) VALUES ('cycleName', 'Formación Profesional')`);
+  db.run(`INSERT OR IGNORE INTO settings (key, value) VALUES ('templateProspecting', '')`);
+  db.run(`INSERT OR IGNORE INTO settings (key, value) VALUES ('templateStart', '')`);
+  db.run(`INSERT OR IGNORE INTO settings (key, value) VALUES ('templateEnd', '')`);
+  db.run(`INSERT OR IGNORE INTO settings (key, value) VALUES ('cycleHours', '400')`);
 });
 
 export default db;
