@@ -94,4 +94,4 @@ Si tienes alguna duda, encuentras un error o tienes sugerencias para mejorar la 
 *   **Email**: [vicdejor@posteo.net](mailto:vicdejor@posteo.net)
 
 ---
-*Manual generado para FE Connect v1.5 - 2026*
+*Manual generado para FE Connect v1.5 - 2026 | Hecho con [Antigravity](https://antigravity.ai)*
