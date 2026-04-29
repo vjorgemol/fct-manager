@@ -4,13 +4,23 @@ import { Mail, Send, ExternalLink, Calendar, Building2 } from 'lucide-react';
 import { differenceInDays, parseISO, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
+/**
+ * Página de Comunicaciones.
+ * Gestiona los avisos automáticos de inicio/fin de prácticas y la prospección de empresas.
+ */
 export const Communications: React.FC = () => {
-  const { students, companies, placements, schoolName, reminderDays, updatePlacement, updateCompany, tutorName, tutorEmail, cycleName, academicYear } = useData();
+  const { 
+    students, companies, placements, schoolName, reminderDays, 
+    updatePlacement, updateCompany, tutorName, tutorEmail, cycleName, academicYear,
+    templateProspecting, templateStart, templateEnd, cycleHours
+  } = useData();
+  
   const [activeTab, setActiveTab] = useState<'prospecting' | 'reminders'>('reminders');
   const [selectedCompany, setSelectedCompany] = useState('');
 
   const today = new Date();
 
+  // Empresas que no han sido contactadas en el curso actual
   const prospectingCompanies = companies.filter(c => 
     !c.prospectingYears?.includes(academicYear) && 
     !c.acceptedYears?.includes(academicYear) && 
@@ -18,10 +28,40 @@ export const Communications: React.FC = () => {
     !placements.some(p => p.companyId === c.id)
   );
 
+  /**
+   * Abre el gestor de correo predeterminado del sistema.
+   */
   const openMailTo = (to: string, subject: string, body: string) => {
     window.location.href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
+  /**
+   * Función auxiliar para reemplazar variables en las plantillas de texto.
+   */
+  const replaceVars = (template: string, data: any) => {
+    let result = template;
+    const vars: any = {
+      '{schoolName}': schoolName,
+      '{tutorName}': tutorName,
+      '{tutorEmail}': tutorEmail,
+      '{cycleName}': cycleName,
+      '{studentName}': data.studentName || '',
+      '{companyName}': data.companyName || '',
+      '{contactPerson}': data.contactPerson || '',
+      '{startDate}': data.startDate || '',
+      '{endDate}': data.endDate || '',
+      '{hours}': data.hours || ''
+    };
+
+    Object.keys(vars).forEach(key => {
+      result = result.split(key).join(vars[key]);
+    });
+    return result;
+  };
+
+  /**
+   * Obtiene las prácticas que comienzan o terminan próximamente.
+   */
   const getUpcomingPlacements = () => {
     return placements.filter(p => p.status === 'pending' || p.status === 'active')
       .map(p => {
@@ -50,34 +90,58 @@ export const Communications: React.FC = () => {
 
   const upcoming = getUpcomingPlacements();
 
+  /**
+   * Genera el contenido del email de prospección usando la plantilla configurable.
+   */
   const getProspectingEmail = (companyId: string) => {
     const comp = companies.find(c => c.id === companyId);
     if (!comp) return { to: '', subject: '', body: '' };
 
-    const greeting = comp.contactPerson ? `Estimado/a ${comp.contactPerson},` : `Estimados responsables de ${comp.name},`;
+    const body = replaceVars(templateProspecting, {
+      companyName: comp.name,
+      contactPerson: comp.contactPerson || 'responsables',
+      hours: cycleHours
+    });
 
     return {
       to: comp.email,
-      subject: `Colaboración para prácticas de Formación Profesional (FE) - ${schoolName}`,
-      body: `${greeting}\n\nMe pongo en contacto con ustedes desde ${schoolName} para ofrecerles la posibilidad de acoger a nuestros alumnos del ciclo de ${cycleName} para realizar la Formación en Empresas (FE) 120 horas, 3 semanas.\n\nNuestros alumnos cuentan con una sólida base teórica y práctica, y están listos para integrarse en un entorno laboral real para complementar su aprendizaje. La acogida de alumnos en prácticas no supone ninguna relación laboral ni coste para la empresa.\n\nEstaríamos encantados de poder organizar una breve llamada o reunión para detallarles el proceso y las fechas en las que los alumnos podrían incorporarse.\n\nQuedo a su entera disposición.\n\nAtentamente,\n${tutorName}\n${schoolName}\n${tutorEmail}`
+      subject: `Colaboración para prácticas de Formación Profesional - ${schoolName}`,
+      body
     };
   };
 
+  /**
+   * Genera el contenido de los emails de aviso (inicio/fin) usando las plantillas configurables.
+   */
   const getReminderEmail = (item: any) => {
     const { student, company, type, p } = item;
-    const greeting = company.contactPerson ? `Hola ${company.contactPerson},` : `Hola,`;
-
+    
     if (type === 'start') {
+      const body = replaceVars(templateStart, {
+        studentName: `${student.firstName} ${student.lastName}`,
+        companyName: company.name,
+        contactPerson: company.contactPerson || 'Hola',
+        startDate: format(parseISO(p.startDate), "d 'de' MMMM", { locale: es }),
+        hours: p.hours
+      });
+
       return {
         to: `${student.email}, ${company.email}`,
-        subject: `[FE] Inicio de Prácticas: ${student.firstName} ${student.lastName} en ${company.name}`,
-        body: `${greeting}\n\nEste es un correo recordatorio de que las prácticas de ${cycleName} comenzarán en breve.\n\nAlumno/a: ${student.firstName} ${student.lastName}\nCentro Educativo: ${schoolName}\nEmpresa: ${company.name}\nFecha de Inicio: ${format(parseISO(p.startDate), "d 'de' MMMM", { locale: es })}\nHoras Totales: ${p.hours}\n\nPara cualquier duda, estoy a su disposición.\n\nUn saludo,\n${tutorName}\n${tutorEmail}`
+        subject: `[FE] Inicio de Prácticas: ${student.firstName} ${student.lastName}`,
+        body
       };
     } else {
+      const body = replaceVars(templateEnd, {
+        studentName: `${student.firstName} ${student.lastName}`,
+        companyName: company.name,
+        contactPerson: company.contactPerson || 'Hola',
+        endDate: format(parseISO(p.endDate), "d 'de' MMMM", { locale: es })
+      });
+
       return {
         to: `${student.email}, ${company.email}`,
-        subject: `[FE] Próxima Finalización de Prácticas: ${student.firstName} ${student.lastName} en ${company.name}`,
-        body: `${greeting}\n\nLes escribo para recordarles que el periodo de prácticas de Formación en Centros de Trabajo está próximo a su finalización.\n\nAlumno/a: ${student.firstName} ${student.lastName}\nCentro Educativo: ${schoolName}\nEmpresa: ${company.name}\nFecha de Fin Prevista: ${format(parseISO(p.endDate), "d 'de' MMMM", { locale: es })}\n\nEs necesario que vayamos preparando la documentación de evaluación final. Me pondré en contacto con la empresa en los próximos días para concretar la visita de seguimiento y evaluación.\n\nUn saludo y gracias por su colaboración,\n${tutorName}\n${tutorEmail}`
+        subject: `[FE] Finalización de Prácticas: ${student.firstName} ${student.lastName}`,
+        body
       };
     }
   };
@@ -89,6 +153,7 @@ export const Communications: React.FC = () => {
         <p className="text-zinc-500 mt-2">Generación automática de correos usando tu cliente de correo (Outlook, Gmail, etc).</p>
       </div>
 
+      {/* Tabs de navegación */}
       <div className="flex bg-zinc-100 p-1 rounded-xl w-full sm:w-fit overflow-x-auto no-scrollbar">
         <button
           onClick={() => setActiveTab('reminders')}
@@ -105,6 +170,7 @@ export const Communications: React.FC = () => {
         </button>
       </div>
 
+      {/* Vista de Avisos Automáticos (Inicio/Fin) */}
       {activeTab === 'reminders' && (
         <div className="space-y-6">
           {upcoming.length === 0 ? (
@@ -182,6 +248,7 @@ export const Communications: React.FC = () => {
         </div>
       )}
 
+      {/* Vista de Prospección */}
       {activeTab === 'prospecting' && (
         <div className="bg-white rounded-3xl border border-zinc-200 shadow-sm p-8">
           <div className="max-w-2xl">

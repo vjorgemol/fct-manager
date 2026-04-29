@@ -1,9 +1,17 @@
 import React, { useRef, useState } from 'react';
 import { useData } from '../context/DataContext';
-import { Database, UploadCloud, DownloadCloud, AlertTriangle, CheckCircle2, Plus, UserCheck, Trash2 } from 'lucide-react';
+import { Database, UploadCloud, DownloadCloud, AlertTriangle, CheckCircle2, Plus, UserCheck, Trash2, Mail } from 'lucide-react';
 
 export const Settings: React.FC = () => {
-  const { allStudents, companies, allPlacements, teachers, schoolName, academicYear, reminderDays, setReminderDays, tutorName, setTutorName, tutorEmail, setTutorEmail, cycleName, setCycleName, importData, addTeacher, deleteTeacher } = useData();
+  const { 
+    allStudents, companies, allPlacements, teachers, schoolName, academicYear, 
+    reminderDays, setReminderDays, tutorName, setTutorName, tutorEmail, setTutorEmail, 
+    cycleName, setCycleName, importData, addTeacher, deleteTeacher,
+    templateProspecting, setTemplateProspecting,
+    templateStart, setTemplateStart,
+    templateEnd, setTemplateEnd,
+    cycleHours, setCycleHours
+  } = useData();
   const [newTeacherName, setNewTeacherName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importStatus, setImportStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null);
@@ -272,6 +280,16 @@ export const Settings: React.FC = () => {
             value={cycleName}
             onChange={e => setCycleName(e.target.value)}
           />
+          <div className="flex items-center gap-2">
+            <input 
+              type="number" 
+              placeholder="Horas"
+              className="w-24 px-4 py-2 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none"
+              value={cycleHours}
+              onChange={e => setCycleHours(Number(e.target.value))}
+            />
+            <span className="text-sm font-medium text-zinc-500">horas</span>
+          </div>
         </div>
       </div>
 
@@ -325,6 +343,58 @@ export const Settings: React.FC = () => {
             {teachers.length === 0 && (
               <p className="text-center text-xs text-zinc-400 py-2">No hay profesores registrados.</p>
             )}
+          </div>
+        </div>
+      </div>
+      <div className="bg-white p-8 rounded-2xl border border-zinc-200 shadow-sm space-y-8">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-primary-50 text-primary-600 rounded-xl flex items-center justify-center">
+            <Mail size={24} />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-zinc-900">Plantillas de Email</h3>
+            <p className="text-zinc-500 text-sm">Personaliza los textos de los correos automáticos.</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6">
+          <div>
+            <label className="block text-sm font-bold text-zinc-700 mb-2">1. Prospección de Empresas (Presentación)</label>
+            <textarea 
+              className="w-full h-32 px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none text-sm"
+              placeholder="Escribe la plantilla para contactar con nuevas empresas..."
+              value={templateProspecting}
+              onChange={e => setTemplateProspecting(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-zinc-700 mb-2">2. Aviso de Inicio de Prácticas</label>
+            <textarea 
+              className="w-full h-32 px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none text-sm"
+              placeholder="Escribe la plantilla para avisar del inicio de las prácticas..."
+              value={templateStart}
+              onChange={e => setTemplateStart(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-zinc-700 mb-2">3. Aviso de Finalización de Prácticas</label>
+            <textarea 
+              className="w-full h-32 px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none text-sm"
+              placeholder="Escribe la plantilla para avisar del fin de las prácticas..."
+              value={templateEnd}
+              onChange={e => setTemplateEnd(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-100">
+          <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-3">Variables disponibles:</h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {['{studentName}', '{companyName}', '{contactPerson}', '{cycleName}', '{schoolName}', '{tutorName}', '{tutorEmail}', '{startDate}', '{endDate}', '{hours}'].map(v => (
+              <code key={v} className="text-[10px] bg-white border border-zinc-200 px-2 py-1 rounded text-primary-600 font-mono">{v}</code>
+            ))}
           </div>
         </div>
       </div>

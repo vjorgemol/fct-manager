@@ -39,6 +39,14 @@ interface DataContextType {
   addPlacement: (placement: Omit<Placement, 'id'>) => void;
   updatePlacement: (placement: Placement) => void;
   deletePlacement: (id: string) => void;
+  templateProspecting: string;
+  setTemplateProspecting: (template: string) => void;
+  templateStart: string;
+  setTemplateStart: (template: string) => void;
+  templateEnd: string;
+  setTemplateEnd: (template: string) => void;
+  cycleHours: number;
+  setCycleHours: (hours: number) => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -55,6 +63,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [tutorName, setTutorName] = useState<string>('Tutor FCT');
   const [tutorEmail, setTutorEmail] = useState<string>('tutor@centro.edu');
   const [cycleName, setCycleName] = useState<string>('Formación Profesional');
+  const [templateProspecting, setTemplateProspecting] = useState<string>(`Estimados responsables de {companyName},\n\nMe pongo en contacto con ustedes desde {schoolName} para ofrecerles la posibilidad de acoger a nuestros alumnos del ciclo de {cycleName} para realizar la Formación en Empresas (FE) de {hours} horas.\n\nNuestros alumnos cuentan con una sólida base teórica y práctica, y están listos para integrarse en un entorno laboral real para complementar su aprendizaje. La acogida de alumnos en prácticas no supone ninguna relación laboral ni coste para la empresa.\n\nEstaríamos encantados de poder organizar una breve llamada o reunión para detallarles el proceso y las fechas en las que los alumnos podrían incorporarse.\n\nQuedo a su entera disposición.\n\nAtentamente,\n{tutorName}\n{schoolName}\n{tutorEmail}`);
+  const [templateStart, setTemplateStart] = useState<string>(`Hola {contactPerson},\n\nEste es un correo recordatorio de que las prácticas de {cycleName} comenzarán en breve.\n\nAlumno/a: {studentName}\nCentro Educativo: {schoolName}\nEmpresa: {companyName}\nFecha de Inicio: {startDate}\nHoras Totales: {hours}\n\nPara cualquier duda, estoy a su disposición.\n\nUn saludo,\n{tutorName}\n{tutorEmail}`);
+  const [templateEnd, setTemplateEnd] = useState<string>(`Hola {contactPerson},\n\nLes escribo para recordarles que el periodo de prácticas de Formación en Centros de Trabajo de {studentName} está próximo a su finalización ({endDate}).\n\nEs necesario que vayamos preparando la documentación de evaluación final. Me pondré en contacto con la empresa en los próximos días para concretar la visita de seguimiento y evaluación.\n\nUn saludo y gracias por su colaboración,\n{tutorName}\n{tutorEmail}`);
+  const [cycleHours, setCycleHours] = useState<number>(400);
 
   // --- Estados de Datos ---
   const [students, setStudents] = useState<Student[]>([]);
@@ -76,6 +88,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (data.tutorName) setTutorName(data.tutorName);
         if (data.tutorEmail) setTutorEmail(data.tutorEmail);
         if (data.cycleName) setCycleName(data.cycleName);
+        if (data.templateProspecting) setTemplateProspecting(data.templateProspecting);
+        if (data.templateStart) setTemplateStart(data.templateStart);
+        if (data.templateEnd) setTemplateEnd(data.templateEnd);
+        if (data.cycleHours) setCycleHours(Number(data.cycleHours));
       })
       .catch(console.error);
 
@@ -104,6 +120,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const handleSetTutorName = (name: string) => { setTutorName(name); updateSettings('tutorName', name); };
   const handleSetTutorEmail = (email: string) => { setTutorEmail(email); updateSettings('tutorEmail', email); };
   const handleSetCycleName = (name: string) => { setCycleName(name); updateSettings('cycleName', name); };
+
+  const handleSetTemplateProspecting = (template: string) => { setTemplateProspecting(template); updateSettings('templateProspecting', template); };
+  const handleSetTemplateStart = (template: string) => { setTemplateStart(template); updateSettings('templateStart', template); };
+  const handleSetTemplateEnd = (template: string) => { setTemplateEnd(template); updateSettings('templateEnd', template); };
+  const handleSetCycleHours = (hours: number) => { setCycleHours(hours); updateSettings('cycleHours', hours.toString()); };
 
   /**
    * Calcula el curso académico anterior basándose en el actual (ej: "25/26" -> "24/25").
@@ -206,6 +227,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (data.tutorName) setTutorName(data.tutorName);
     if (data.tutorEmail) setTutorEmail(data.tutorEmail);
     if (data.cycleName) setCycleName(data.cycleName);
+    if (data.templateProspecting) setTemplateProspecting(data.templateProspecting);
+    if (data.templateStart) setTemplateStart(data.templateStart);
+    if (data.templateEnd) setTemplateEnd(data.templateEnd);
+    if (data.cycleHours) setCycleHours(data.cycleHours);
     
     // Enviar todo el paquete de importación al servidor para sobrescribir DB
     fetch(`${API_URL}/import`, {
@@ -233,7 +258,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addStudent, updateStudent, deleteStudent,
       addCompany, updateCompany, deleteCompany,
       addTeacher, deleteTeacher,
-      addPlacement, updatePlacement, deletePlacement
+      addPlacement, updatePlacement, deletePlacement,
+      templateProspecting, setTemplateProspecting: handleSetTemplateProspecting,
+      templateStart, setTemplateStart: handleSetTemplateStart,
+      templateEnd, setTemplateEnd: handleSetTemplateEnd,
+      cycleHours, setCycleHours: handleSetCycleHours
     }}>
       {children}
     </DataContext.Provider>

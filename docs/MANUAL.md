@@ -60,6 +60,9 @@ Ahorra tiempo enviando correos personalizados con un solo clic. El sistema gener
 *   **Inicio de FCT**: Enviar los datos del alumno asignado a la empresa.
 *   **Fin de FCT**: Recordar la entrega de documentación al finalizar las prácticas.
 
+### Personalización de Plantillas
+Puedes editar el texto de estos correos en **Ajustes > Plantillas de Email**. El sistema permite usar variables entre llaves (ej: `{studentName}`, `{companyName}`) que se sustituirán por los datos reales al generar el correo.
+
 ---
 
 ## ⚙️ Ajustes y Copias de Seguridad
