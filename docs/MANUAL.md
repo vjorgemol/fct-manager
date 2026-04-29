@@ -7,8 +7,9 @@
 ## 🚀 Inicio Rápido: Primeros Pasos
 
 1.  **Configura el Tutor**: Ve a **Ajustes** y rellena tu nombre, email y el nombre del Ciclo Formativo. Esto se usará en todos los correos automáticos.
-2.  **Importa tus Alumnos**: Si tienes un listado en formato Aules o un CSV propio, impórtalo desde la sección **Alumnos**.
-3.  **Registra Empresas**: Añade las empresas colaboradoras en la sección **Empresas**.
+2.  **Configura las Horas**: En **Ajustes**, define las "Horas Totales del Ciclo" (ej: 400). Este valor se usará por defecto en los correos de prospección.
+3.  **Importa tus Alumnos**: Si tienes un listado en formato Aules o un CSV propio, impórtalo desde la sección **Alumnos**.
+4.  **Registra Empresas**: Añade las empresas colaboradoras en la sección **Empresas**.
 
 ---
 
@@ -63,12 +64,17 @@ Ahorra tiempo enviando correos personalizados con un solo clic. El sistema gener
 ### Personalización de Plantillas
 Puedes editar el texto de estos correos en **Ajustes > Plantillas de Email**. El sistema permite usar variables entre llaves (ej: `{studentName}`, `{companyName}`) que se sustituirán por los datos reales al generar el correo.
 
+#### El uso de la variable `{hours}`
+Esta variable es inteligente y se adapta según el contexto:
+*   En **Prospección**: Muestra las horas totales definidas en Ajustes.
+*   En **Inicio/Fin**: Muestra las horas específicas asignadas a ese alumno en su ficha de práctica.
+
 ---
 
 ## ⚙️ Ajustes y Copias de Seguridad
 
 ### Backup XML (Muy Importante)
-Aunque los datos se guardan automáticamente en tu equipo, te recomendamos descargar un **Backup XML** periódicamente desde Ajustes. Este archivo contiene **TODO** (alumnos, fotos, empresas, histórico de años anteriores) y te permite restaurar el sistema en otro ordenador.
+Aunque los datos se guardan automáticamente en tu equipo, te recomendamos descargar un **Backup XML** periódicamente desde Ajustes. Este archivo contiene **TODO** (alumnos con sus fotos, empresas, histórico de años anteriores, tus plantillas de email personalizadas y la configuración de horas) y te permite restaurar el sistema en otro ordenador sin perder nada.
 
 ### Gestión de Profesores
 Añade a tus compañeros de departamento para poder asignarlos como tutores de seguimiento en las prácticas.
